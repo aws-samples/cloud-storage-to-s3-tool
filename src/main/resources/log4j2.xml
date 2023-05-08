@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+    <Properties>
+        <Property name="currentlog">${sys:user.dir}/logs/godink-log4j2-junit4-demo.log</Property>
+        <Property name="historylog">${sys:user.dir}/logs/godink-log4j2-junit4-demo_%d{yyyy-MM-dd}_%i.log</Property>
+        <Property name="projectName">godink-log4j2-junit4-demo</Property>
+        <Property name="logType">godink-log4j2-junit4-demo</Property>
+        <Property name="elkLogPattern">%d{yyyy-MM-dd HH:mm:ss} %-5p  thread[%thread] %l  %msg %n</Property>
+        <Property name="logstashIp">${sys:logstash.ip:-127.0.0.1}</Property>
+        <Property name="logstashPort">${sys:logstash.port:-4560}</Property>
+    </Properties>
+    <Filter type="ThresholdFilter" level="trace" />
+
+    <Appenders>
+        <!--控制台输出 -->
+        <Console name="stdout" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%-5p] %c %m%n"/>
+        </Console>
+        <!-- 文件输出 -->
+        <RollingFile name="file" append="true" fileName="${currentlog}" filePattern="${historylog}">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%-5p] %c %m%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+        </RollingFile>
+
+        <!--elk的logstash 入口-->
+        <!--	<Socket name="logstash" host="${logstashIp}" port="${logstashPort}" protocol="TCP">
+                    <ElkLog4j2PatternLayout pattern="${elkLogPattern}" projectName="${projectName}" logType="${logType}" />
+                </Socket> -->
+    </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="stdout" />
+            <AppenderRef ref="file" />
+            <!-- <AppenderRef ref="logstash" /> -->
+        </Root>
+        <!-- 对自己的业务可以配置为debug级别，方便打印查看日志 -->
+        <logger name="com.godink" level="debug" />
+        <logger name="org.apache.http" level="off" additivity="true" />
+    </Loggers>
+
+</Configuration>

@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+    <title>动态创建表格</title>
+    <script src="js/jQuery1.10.js"></script>
+    <script type="text/javascript">
+        function CreateTable() {
+            var str = '{ "total": 149, "columns": [{ "field": "EMPLOYEEID", "title": "员工编号" }, { "field": "EMPLOYEENAME", "title": "员工姓名" }],"rows":[{"EMPLOYEEID":"001","EMPLOYEENAME":"小明"},{"EMPLOYEEID":"002","EMPLOYEENAME":"小宏"}]}';
+            var data = JSON.parse(str);
+            var rowCount = data.rows.length;
+            var cellCount = data.columns.length;
+
+            var table = $("<table border=\"1\">");
+            table.appendTo($("#createtable"));
+            var trHeader = $("<tr></tr>");
+            trHeader.appendTo(table);
+            for (var j = 0; j < cellCount; j++) {
+                var td = $("<td>" + data.columns[j].title + "</td>");
+                td.appendTo(trHeader);
+            }
+
+            for (var i = 0; i < rowCount; i++) {
+                var tr = $("<tr></tr>");
+                tr.appendTo(table);
+                for (var j = 0; j < cellCount; j++) {
+                    var field = data.columns[j].field;
+                    var val="";
+                    if (data.rows[i][field] != null)
+                    {
+                        val = data.rows[i][field];
+                    }
+
+                    var td = $("<td>" + val + "</td>");
+                    td.appendTo(tr);
+                }
+            }
+            $("#createtable").append("</table>");
+        }
+    </script>
+</head>
+
+<body>
+<input type="button" value="添加表格" onclick="CreateTable(5,6)">
+<input type="button" value="添加行">
+<div id="createtable"></div>
+<div id="createrow"></div>
+</body>
+</html>
