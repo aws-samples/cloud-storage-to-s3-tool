@@ -1,7 +1,7 @@
 Cloud Storage To AWS S3 Tool
 ======================================
 
-This service is used to transfer data from Google GCS and other cloud providers (supported by Rclone) to AWS S3. It allows you to batch start and manage EC2 instances to transfer a large amount of data in parallel.
+This tool is used to transfer data from Google GCS and other cloud providers (supported by Rclone) to AWS S3. It allows you to batch start and manage EC2 instances to transfer a large amount of data in parallel.
 The architecture diagram based on Google GCS as the data source is as follows:
 
 ![architecture.png](architecture.png)
