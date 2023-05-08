@@ -21,7 +21,7 @@ Navigate to the newly created folder:
 
 Run the project with:
 
-    ./mvn clean spring-boot:run
+    mvn clean spring-boot:run
 
 Navigate to:
 
@@ -34,7 +34,7 @@ Package the application
 
 To package the project run:
 
-    ./mvn clean package
+    mvn clean package
 We need to use the packaged jar file as the executable program.
 
 The deployment document can be found in the deployment-guidance.pdf file in the repository. The document is in Chinese. If you need an English version, please feel free to contact us.
