@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>数据传输</title>
+    <link href="/webjars/bootstrap/css/bootstrap.min.css"
+          th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"
+          rel="stylesheet" media="screen"/>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+
+    <!--启动传输集群JavaScript-->
+    <script type="text/javascript">
+        $(function () {
+            $("#createCluster").click(function () {
+                $(this).button('loading');
+                $.ajax({
+                    type: "POST",
+                    url: "createCluster",
+                    contentType: "application/json",
+                    data: JSON.stringify({"num": ($("#num").val()), "type": ($("#type").val())}),
+                    success: function (textStatus) {
+                        showAuto();
+                        alert('success');
+                    },
+                    error: function (textStatus) {
+                        alert('error')
+                    },
+                    complete: function () {
+                        $("#createCluster").button('reset');
+                    }
+                });
+            });
+            $("#terminateCluster").click(function () {
+                $(this).button('loading');
+                $.ajax({
+                    type: "GET",
+                    url: "terminateCluster",
+                    contentType: "application/json",
+                    success: function (textStatus) {
+                        showAuto();
+                        alert('terminate Success');
+                    },
+                    error: function (textStatus) {
+                        alert('terminate Error');
+                    },
+                    complete: function () {
+                        $("#terminateCluster").button('reset');
+                    }
+                });
+
+            });
+            $("#addTransferTask").click(function () {
+                $(this).button('loading');
+                $.ajax({
+                    type: "GET",
+                    url: "addTransferTask",
+                    contentType: "application/json",
+                    success: function (textStatus) {
+                        alert('success')
+                    },
+                    error: function (textStatus) {
+                        alert('error')
+                    },
+                    complete: function () {
+                        $("#addTransferTask").button('reset');
+                    }
+                });
+            });
+            $("#installTools").click(function () {
+                $(this).button('loading');
+                $.ajax({
+                    type: "POST",
+                    url: "installTools",
+                    contentType: "application/json",
+                    data: JSON.stringify({"config": ($("#config").val())}),
+                    success: function (textStatus) {
+                        alert('success')
+                    },
+                    error: function (textStatus) {
+                        alert('error')
+                    },
+                    complete: function () {
+                        $("#installTools").button('reset');
+                    }
+                });
+            });
+            showAuto();
+        });
+
+        function createRow(instanceId, info) {
+            var $items = $(
+                "<tr>" +
+                "<td  style='background: #F1F1F1'>" + instanceId + "</td>" +
+                "<td>" + info.instanceType + "</td>" +
+                "<td>" + info.clonePath + "</td>" +
+                "</tr>"
+            );
+            return $items;
+        };
+
+        function createTaskRow(clonePath, info) {
+            var $items = $(
+                "<tr>" +
+                "<td  style='background: #F1F1F1'>" + clonePath + "</td>" +
+                "<td>" + info.instanceId + "</td>" +
+                "<td>" + info.insertTime + "</td>" +
+                "<td>" + info.updateTime + "</td>" +
+                "<td>" + info.startCloneTime + "</td>" +
+                "<td>" + info.taskStatus + "</td>" +
+                "<td>" + info.transferSizeAndRate + "</td>" +
+                "<td>" + info.transferFileCount + "</td>" +
+                "<td>" + info.transferElapsedTime + "</td>" +
+                "</tr>"
+            );
+            return $items;
+        };
+
+        $(function () {
+            setInterval("showAuto()", 30000);
+        });
+
+        function showAuto() {
+            $("#history_list").empty("");
+            $.ajax({
+                type: "GET",
+                url: "getInstanceOn",
+                dataType: "json",
+                success: function (res) {
+                    console.log(res);
+                    $.each(res, function (index, ele) {
+                        console.log(ele);
+                        var str = createRow(index, ele.info);
+                        $("#history_list").append(str);
+                    });
+                    $(document).ready(function () {
+                        $('#HistoryList').DataTable();
+                    });
+                },
+                error: function () {
+                    alert("ajax getActionHistory error")
+                    console.log("ajax getActionHistory error");
+                }
+            });
+
+            $("#task_list").empty("");
+            $.ajax({
+                type: "GET",
+                url: "getTaskList",
+                dataType: "json",
+                success: function (res) {
+                    console.log(res);
+                    $.each(res, function (index, ele) {
+                        console.log(ele);
+                        var str = createTaskRow(index, ele.info);
+                        $("#task_list").append(str);
+                    });
+                    $(document).ready(function () {
+                        $('#TaskList').DataTable();
+                    });
+                },
+                error: function () {
+                    alert("ajax getTaskList error")
+                    console.log("ajax getTaskList error");
+                }
+            });
+
+
+        }
+    </script>
+    <!--传输任务配置JavaScript-->
+    <script type="text/javascript">
+        $(function () {
+            showConfig();
+
+            $("#clone_submit").click(function () {
+                $(this).button('loading');
+                var gcs_path = $("#gcs_path").val();
+                console.log(aws_s3_path)
+                var aws_s3_path = $("#aws_s3_path").val();
+                console.log(aws_s3_path)
+                var aws_region = $("#aws_region").val();
+                console.log(aws_region)
+                var ami_id = $("#ami_id").val();
+                console.log(ami_id)
+                var aws_clone_log_bucket = $("#aws_clone_log_bucket").val();
+                console.log(aws_clone_log_bucket)
+                var rclone_command = $("#rclone_command").val();
+                console.log(rclone_command)
+                var email_from = $("#email_from").val();
+                console.log(email_from)
+                var email_to = $("#email_to").val();
+                console.log(email_to)
+                var sqs_queue_url = $("#sqs_queue_url").val();
+                console.log(sqs_queue_url)
+
+
+                var fd = new FormData();
+                var files = $('#file')[0].files[0];
+                fd.append('file', files);
+                fd.append('s3Path', aws_s3_path);
+                fd.append('gcsPath', gcs_path);
+                fd.append('awsRegion', aws_region);
+                fd.append('amiId', ami_id);
+                fd.append('awsCloneLogBucket', aws_clone_log_bucket);
+                fd.append('rcloneCommand', rclone_command);
+                fd.append('emailFrom', email_from);
+                fd.append('emailTo', email_to);
+                fd.append('sqsQueueUrl', sqs_queue_url);
+
+                $.ajax({
+                    type: "post",
+                    url: "getCloneInfo",
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        if (response != 0) {
+                            alert('save configuration success');
+                        } else {
+                            alert('file not uploaded');
+                        }
+                    },
+                    error: function () {
+                        alert("save configuration failed!")
+                    },
+                    complete: function () {
+                        $("#clone_submit").button('reset');
+                    }
+                });
+            });
+        });
+
+        function showConfig() {
+            $.ajax({
+                type: "GET",
+                url: "getCloneConfig",
+                dataType: "json",
+                success: function (res) {
+                    console.log(res);
+                    $.each(res, function (index, ele) {
+                        console.log(ele);
+                        $("#" + index).val(ele);
+                    });
+
+                },
+                error: function () {
+                    alert("ajax getCloneConfig error")
+                    console.log("ajax getCloneConfig error");
+                }
+            });
+        }
+
+    </script>
+</head>
+<body>
+<!--<p class="previous-tab"><strong>系统名称???</strong>：<span></span></p>-->
+<!--<hr>-->
+
+<ul id="myTab" class="nav nav-tabs" style="margin: 10px">
+    <li class="active"><a href="#configTask" data-toggle="tab">传输任务配置</a></li>
+    <li><a href="#home" data-toggle="tab">启动传输集群</a></li>
+
+    <li><a href="#cloneTasks" data-toggle="tab">传输任务列表</a></li>
+</ul>
+<div id="myTabContent" class="tab-content" style="margin: 10px">
+    <div class="tab-pane fade" id="home">
+        <div class="alert alert-success" style="width:45%;float: left">
+            <strong>启动传输集群</strong>
+
+            <table id="createCluster-table" class="display" style="width:80%;margin: 20px;float: left">
+                <tbody id="createCluster-body">
+                <tr>
+                    <td style="width: 150px; margin: 10px">机器数量：</td>
+                    <td><input style="width: 250px; margin: 10px" class="input-group" type="text" id="num" value="6"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 150px; margin: 10px">机器类型：</td>
+                    <td><input style="width: 250px; margin: 10px" class="input-group" type="text" id="type"
+                               value="c5.large"/></td>
+                </tr>
+                <tr>
+                    <td style="width: 150px; margin: 10px">
+                        <button class="btn btn-large btn-success" id="createCluster" data-loading-text="Loading..."
+                                type="button">启动集群
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn btn-large btn-success" id="terminateCluster" data-loading-text="Loading..."
+                                type="button">关闭集群
+                        </button>
+                    </td>
+
+                </tr>
+                </tbody>
+            </table>
+            <table id="installTools-table" class="display" style="width:80%;margin: 20px;float: left">
+                <tbody id="installTools-body">
+                <tr>
+                    <td style="width: 150px">Rclone传输配置</td>
+                </tr>
+                <tr>
+                    <td><textarea style="width: 400px;height: 200px" id="config"></textarea></td>
+                </tr>
+                <tr>
+                    <td>
+                        <button class="btn btn-large btn-success" style="width: 150px" id="installTools"
+                                data-loading-text="Loading..."
+                                type="button">安装插件
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="width:45%;float: right">
+            <div class="alert alert-success">
+                <strong style="margin-bottom: 10px;">传输EC2实例列表(每30s刷新一次)</strong>
+
+                <table id="HistoryList" class="display" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>实例ID</th>
+                        <th>插件安装状态</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="history_list">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane fade in active" id="configTask">
+        <div>
+            <div class="alert alert-success">
+                <strong>请按照说明填写以下配置</strong>
+            </div>
+            <table id="task-table" class="table" style="width:90%;margin: 20px">
+                <tbody id="task-body" class="table">
+                <tr>
+                    <td style="font-weight: bolder">配置名称</td>
+                    <td style="font-weight: bolder">内容</td>
+                    <td style="font-weight: bolder">说明</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">GCS Path File:</td>
+                    <td>
+                        <form method="post" action="" enctype="multipart/form-data" id="myform">
+                            <div>
+                                <input accept="text/csv" type="file" id="file" name="file"/>
+                                <!--                        <input type="button" class="button" value="上传" id="but_upload">-->
+                            </div>
+                        </form>
+                    </td>
+                    <td>文件格式csv，内容举例：warehouse/business/project/dt=2022-02-28/</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">GCS Bucket:</td>
+                    <td><input style="width: 350px" id="gcs_path" class="input-group"
+                               value="gs://your_gcs_bucket_name/"></td>
+                    <td>源GCS的bucket名称,请参考默认例子输入</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">AWS S3 Bucket:</td>
+                    <td><input style="width: 350px" id="aws_s3_path" class="input-group"
+                               value="s3://your_s3_bucket_name/"></td>
+                    <td>目的AWS S3的bucket名称，请参考默认例子输入</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">AWS Region:</td>
+                    <td><input style="width: 350px" id="aws_region" class="input-group" value="us-east-1"></td>
+                    <td>目的AWS S3所在的区域</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">AWS EC2 AMI ID:</td>
+                    <td><input style="width: 350px" id="ami_id" class="input-group" value="ami-0c02fb55956c7d316"></td>
+                    <td>目的region对应的EC2 AMI ID，region若不变，保持默认值即可</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">Cloen Log Bucket:</td>
+                    <td><input style="width: 350px" id="aws_clone_log_bucket" class="input-group"
+                               value="s3://your-rclone-transfer-log-bucket-name/"></td>
+                    <td>存储数据传输过程中产生的log的S3 bucket名称</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">Rclone 命令 :</td>
+                    <td><input style="width: 350px" id="rclone_command" class="input-group"
+                               value="rclone copy -v {SourceLocation} {DestinationLocation}"></td>
+                    <td>Rclone的传输命令，可根据需要进行修改，一般保持默认即可</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">Alarm Email From:</td>
+                    <td><input style="width: 350px" id="email_from" class="input-group" value="name@email.com"></td>
+                    <td>发送告警的邮箱</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">Alarm Email To:</td>
+                    <td><input style="width: 350px" id="email_to" class="input-group" value="name@email.com"></td>
+                    <td>接收告警的邮箱</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px">SQS URL:</td>
+                    <td><input style="width: 350px" id="sqs_queue_url" class="input-group"
+                               value="https://sqs.us-east-1.amazonaws.com/071737308255/rclone-demo-gcs-s3.fifo"></td>
+                    <td>用来传输copy数据的消息队列的URL</td>
+                </tr>
+                <tr>
+                    <td style="width: 150px"></td>
+                    <td>
+                        <div>
+                            <button id="clone_submit" class="btn btn-large btn-success" data-loading-text="Loading..."
+                                    type="button">保存配置
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <br>
+            <br>
+            <!--    <div><button id="test_submit" class="btn btn-primary">测试</button></div>-->
+
+        </div>
+    </div>
+    <div class="tab-pane fade" id="cloneTasks">
+        <div style="width:95%;float: left">
+            <div class="alert alert-success">
+                <strong style="margin-bottom: 10px;">传输任务列表(每30s刷新一次)</strong>
+
+                <table id="TaskList" class="display" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>Clone Path</th>
+                        <th>Instance Id</th>
+                        <th>Insert Time</th>
+                        <th>Update Time</th>
+                        <th>Start Clone Time</th>
+                        <th>Task Status</th>
+                        <th>Transfer Rate of Progress</th>
+                        <th>Transfer File Count</th>
+                        <th>Transfer Elapsed Time</th>
+                    </tr>
+                    </thead>
+                    <tbody id="task_list">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    $(function () {
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            // 获取已激活的标签页的名称
+            var activeTab = $(e.target).text();
+            // 获取前一个激活的标签页的名称
+            var previousTab = $(e.relatedTarget).text();
+            $(".active-tab span").html(activeTab);
+            $(".previous-tab span").html(previousTab);
+        });
+    });
+</script>
+
+
+</body>
+</html>
