@@ -58,6 +58,7 @@ public class TaskController {
                                             @RequestParam("gcsPath") String gcsPath,
                                             @RequestParam(required = false, name = "file") MultipartFile file,
                                             @RequestParam("amiId") String amiId,
+                                            @RequestParam("awsRegion") String awsRegion,
                                             @RequestParam("awsCloneLogBucket") String awsCloneLogBucket,
                                             @RequestParam("rcloneCommand") String rcloneCommand,
                                             @RequestParam("emailTo") String emailTo
@@ -82,7 +83,7 @@ public class TaskController {
         if (configList.size() > 0) {
             CloneConfig config = configList.get(0);
             config.getInfo().setAmiID(amiId);
-            config.getInfo().setAwsRegion(ENVConfig.awsRegion);
+            config.getInfo().setAwsRegion(awsRegion);
             config.getInfo().setRcloneCommand(rcloneCommand);
             config.getInfo().setTransferS3LogBucket(awsCloneLogBucket);
             config.getInfo().setEmailTo(emailTo);
