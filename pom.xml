@@ -36,7 +36,7 @@
         <!-- log4j2 -->
         <log4j2.version>2.15.0</log4j2.version>
         <!-- WebJars -->
-        <webjars.bootstrap.version>3.3.7</webjars.bootstrap.version>
+        <webjars.bootstrap.version>5.0.0</webjars.bootstrap.version>
         <webjars.jquery.version>3.2.1</webjars.jquery.version>
         <webjars.webjars-locator.version>0.40</webjars.webjars-locator.version>
     </properties>
