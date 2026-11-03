@@ -1,6 +1,6 @@
 package org.aws.gcrrp.datatos3.controller;
 
-import net.sf.json.JSONObject;
+import org.kordamp.json.JSONObject;
 import org.aws.gcrrp.datatos3.model.CloneTask;
 import org.aws.gcrrp.datatos3.model.EC2Instance;
 import org.aws.gcrrp.datatos3.model.InstanceInfo;

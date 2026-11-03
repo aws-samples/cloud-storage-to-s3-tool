@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.aws.gcrrp.datatos3.model.CloneConfig;
 import org.aws.gcrrp.datatos3.model.CloneTask;
 import org.aws.gcrrp.datatos3.utils.DynamoDBSingleton;
-import net.sf.json.JSONObject;
+import org.kordamp.json.JSONObject;
 
 
 import java.text.SimpleDateFormat;
