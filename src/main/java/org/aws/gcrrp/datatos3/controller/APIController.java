@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.ssm.model.SendCommandRequest;
 import software.amazon.awssdk.services.ssm.model.SendCommandResponse;
 
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @RestController
@@ -56,6 +57,14 @@ public class APIController {
         Date date = new Date();
         String num = jsonObject.get("num").toString();
         String type = jsonObject.get("type").toString();
+        int count = Integer.parseInt(num);
+        if (count < 1 || count > 50) {
+            throw new IllegalArgumentException("num must be between 1 and 50");
+        }
+        InstanceType instanceType = InstanceType.fromValue(type);
+        if (instanceType == null || instanceType == InstanceType.UNKNOWN_TO_SDK_VERSION) {
+            throw new IllegalArgumentException("Invalid instance type");
+        }
         logger.info(num);
         logger.info(type);
         String name = "rclone-instance";
@@ -64,7 +73,7 @@ public class APIController {
     }
 
 
-    @GetMapping(value = "/terminateCluster")
+    @PostMapping(value = "/terminateCluster")
     public void terminateCluster() {
         logger.info("invoke terminateCluster");
         this.terminateEC2(allEC2List);
@@ -192,13 +201,11 @@ public class APIController {
         commandList.add(ssmCommand);
         ssmCommand = "sudo mkdir -p /root/.config/rclone/";
         commandList.add(ssmCommand);
-        ssmCommand = "cat << EOF > /home/ssm-user/.config/rclone/rclone.conf\n" +
-                config + "\n" +
-                "EOF";
+        // Write the rclone config through base64 so its content can never be interpreted by the shell.
+        String configB64 = Base64.getEncoder().encodeToString((config + "\n").getBytes(StandardCharsets.UTF_8));
+        ssmCommand = "echo " + configB64 + " | base64 -d > /home/ssm-user/.config/rclone/rclone.conf && chmod 600 /home/ssm-user/.config/rclone/rclone.conf";
         commandList.add(ssmCommand);
-        ssmCommand = "cat << EOF > /root/.config/rclone/rclone.conf\n" +
-                config + "\n" +
-                "EOF";
+        ssmCommand = "echo " + configB64 + " | base64 -d > /root/.config/rclone/rclone.conf && chmod 600 /root/.config/rclone/rclone.conf";
         commandList.add(ssmCommand);
         return commandList;
     }
@@ -287,15 +294,15 @@ public class APIController {
                             String cloneLogPath = getLogPath(cloneTask.getClonePath());
 //                        Config.md5_check;
                             //读取双向 md 日志
-                            ssmCommand = "rclone md5sum " + cloneTask.getInfo().getSourceLocation() + "> \"/usr/tmp/" + cloneLogPath + "/source-md.log\" 2>&1";
+                            ssmCommand = "rclone md5sum " + CommandSafety.shQuote(cloneTask.getInfo().getSourceLocation()) + " > " + CommandSafety.shQuote("/usr/tmp/" + cloneLogPath + "/source-md.log") + " 2>&1";
                             md5CommandList.add(ssmCommand);
-                            ssmCommand = "rclone md5sum " + cloneTask.getInfo().getDestinationLocation() + "> \"/usr/tmp/" + cloneLogPath + "/destination-md.log\" 2>&1";
+                            ssmCommand = "rclone md5sum " + CommandSafety.shQuote(cloneTask.getInfo().getDestinationLocation()) + " > " + CommandSafety.shQuote("/usr/tmp/" + cloneLogPath + "/destination-md.log") + " 2>&1";
                             md5CommandList.add(ssmCommand);
-                            ssmCommand = "tail -n 5 /usr/tmp/" + cloneLogPath + "/rclone.log";
+                            ssmCommand = "tail -n 5 " + CommandSafety.shQuote("/usr/tmp/" + cloneLogPath + "/rclone.log");
                             md5CommandList.add(ssmCommand);
-                            ssmCommand = "mkdir -p /usr/tmp/log/" + cloneLogPath + "/rclone.log";
+                            ssmCommand = "mkdir -p " + CommandSafety.shQuote("/usr/tmp/log/" + cloneLogPath + "/rclone.log");
                             md5CommandList.add(ssmCommand);
-                            ssmCommand = "rclone copy -v /usr/tmp/" + cloneLogPath + " " + ENVConfig.transferS3LogPath + cloneLogPath + "> \"/usr/tmp/log/" + cloneLogPath + ".log\" 2>&1";
+                            ssmCommand = "rclone copy -v " + CommandSafety.shQuote("/usr/tmp/" + cloneLogPath) + " " + CommandSafety.shQuote(ENVConfig.transferS3LogPath + cloneLogPath) + " > " + CommandSafety.shQuote("/usr/tmp/log/" + cloneLogPath + ".log") + " 2>&1";
                             md5CommandList.add(ssmCommand);
                             List<CommandInvocation> checkInvocationList = this.runCommand(md5CommandList, true, instanceId);
                             //TODO get
@@ -344,10 +351,22 @@ public class APIController {
                             //下发任务TaskCommandList
                             ArrayList<String> addTaskCommandList = new ArrayList<>();
 
-                            String logMakeDirCommand = "mkdir -p /usr/tmp/" + logPath;
+                            String sourceLocation;
+                            String destinationLocation;
+                            try {
+                                sourceLocation = CommandSafety.requireSafePath(cloneTask.getInfo().getSourceLocation(), "source location");
+                                destinationLocation = CommandSafety.requireSafePath(cloneTask.getInfo().getDestinationLocation(), "destination location");
+                            } catch (IllegalArgumentException e) {
+                                logger.error("Rejected clone task {}: {}", cloneTask.getClonePath(), e.getMessage());
+                                cloneTask.getInfo().setTaskStatus("rejected");
+                                dynamoDBRepository.createTaskItem(cloneTask);
+                                continue;
+                            }
+                            String logMakeDirCommand = "mkdir -p " + CommandSafety.shQuote("/usr/tmp/" + logPath);
                             addTaskCommandList.add(logMakeDirCommand);
-                            ENVConfig.rcloneCommand.replace("", "");
-                            String addTaskCommand = ENVConfig.rcloneCommand.replace("{SourceLocation}", cloneTask.getInfo().getSourceLocation()).replace("{DestinationLocation}", cloneTask.getInfo().getDestinationLocation()) + " > \"/usr/tmp/" + logPath + "/rclone.log\" 2>&1 &";
+                            // The rclone command is fixed on the server; only validated, shell-quoted paths are added.
+                            String addTaskCommand = "rclone copy -v " + CommandSafety.shQuote(sourceLocation) + " " + CommandSafety.shQuote(destinationLocation)
+                                    + " > " + CommandSafety.shQuote("/usr/tmp/" + logPath + "/rclone.log") + " 2>&1 &";
                             addTaskCommandList.add(addTaskCommand);
 
                             this.runCommand(addTaskCommandList, false, instanceId);
@@ -445,7 +464,7 @@ public class APIController {
 
     public String getLogPath(String path) {
         if (path != null && path.contains("/")) {
-            return path.replaceAll("/", "_").replaceAll("=", "_");
+            return CommandSafety.toSafeSegment(path);
 //            return path.substring(path.lastIndexOf("/")-10,path.lastIndexOf("/"));
         }
         return "ALL-LOG";

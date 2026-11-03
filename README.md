@@ -27,7 +27,14 @@ Navigate to:
 
     http://localhost:8080
 
-Login with: `user` and `demo`
+Before starting, set the login credentials with environment variables (the application will not start without a password):
+
+    export APP_USERNAME=<your-username>
+    export APP_PASSWORD=<a-strong-password>
+
+By default the application only listens on `127.0.0.1`. To reach it from another host, set `SERVER_ADDRESS` and restrict inbound access to trusted IPs with a security group.
+
+Log in with the credentials you configured above.
 
 Package the application
 -----------------------
@@ -40,6 +47,14 @@ We need to use the packaged jar file as the executable program.
 The deployment document can be found in the deployment-guidance.pdf file in the repository. The document is in Chinese. If you need an English version, please feel free to contact us.
 
 
+
+## Security notes
+
+- All endpoints require authentication, and CSRF protection is enabled.
+- The rclone command is fixed on the server side. Source, destination and log paths are validated and shell-quoted before they are sent to the transfer instances through SSM.
+- Only the Spring Boot Actuator `health` endpoint is exposed, under `/actuator`.
+- Grant `Rclone-EC2-Instance-Role` only what it needs: access to the source/destination and log buckets, plus `AmazonSSMManagedInstanceCore`.
+- Do not bake long-lived GCS credentials into the transfer AMI; keep them in a secrets store such as AWS Secrets Manager.
 
 ## Security
 

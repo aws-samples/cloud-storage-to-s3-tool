@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.aws.gcrrp.datatos3.model.CloneConfig;
 import org.aws.gcrrp.datatos3.model.CloneTask;
 import org.aws.gcrrp.datatos3.model.ConfigInfo;
+import org.aws.gcrrp.datatos3.utils.CommandSafety;
 import org.aws.gcrrp.datatos3.utils.ENVConfig;
 
 import javax.annotation.PostConstruct;
@@ -60,18 +61,26 @@ public class TaskController {
                                             @RequestParam("amiId") String amiId,
                                             @RequestParam("awsRegion") String awsRegion,
                                             @RequestParam("awsCloneLogBucket") String awsCloneLogBucket,
-                                            @RequestParam("rcloneCommand") String rcloneCommand,
+                                            @RequestParam(required = false, name = "rcloneCommand") String rcloneCommand,
                                             @RequestParam("emailTo") String emailTo
     ) throws Exception {
 
+        // Validate every value that later ends up in a shell command or an AWS API call.
+        CommandSafety.requireSafePath(s3Path, "s3Path");
+        CommandSafety.requireSafePath(gcsPath, "gcsPath");
+        CommandSafety.requireSafePath(awsCloneLogBucket, "awsCloneLogBucket");
+        CommandSafety.requireAmiId(amiId);
+        CommandSafety.requireRegion(awsRegion);
+        CommandSafety.requireEmail(emailTo);
+        // rcloneCommand from the client is ignored: the command is fixed on the server (see ENVConfig).
+
         ENVConfig.amiID = amiId;
-        ENVConfig.rcloneCommand = rcloneCommand;
         ENVConfig.transferS3LogPath = awsCloneLogBucket;
         ENVConfig.emailFrom = emailTo;
         ENVConfig.emailTo = emailTo;
 
         configMap.put("ami_id", amiId);
-        configMap.put("rclone_command", rcloneCommand);
+        configMap.put("rclone_command", ENVConfig.rcloneCommand);
         configMap.put("aws_clone_log_bucket", awsCloneLogBucket);
         configMap.put("email_from", emailTo);
         configMap.put("email_to", emailTo);
@@ -84,7 +93,7 @@ public class TaskController {
             CloneConfig config = configList.get(0);
             config.getInfo().setAmiID(amiId);
             config.getInfo().setAwsRegion(awsRegion);
-            config.getInfo().setRcloneCommand(rcloneCommand);
+            config.getInfo().setRcloneCommand(ENVConfig.rcloneCommand);
             config.getInfo().setTransferS3LogBucket(awsCloneLogBucket);
             config.getInfo().setEmailTo(emailTo);
             config.getInfo().setEmailFrom(emailTo);
@@ -93,7 +102,7 @@ public class TaskController {
             config.getInfo().setDestinationBucketName(s3Path);
             dynamoDBRepository.updateConfigItem(config);
         } else {
-            ConfigInfo configInfo = new ConfigInfo(ENVConfig.awsRegion, amiId, awsCloneLogBucket, rcloneCommand, emailTo, emailTo, ENVConfig.sqsQueueUrl, gcsPath, s3Path);
+            ConfigInfo configInfo = new ConfigInfo(ENVConfig.awsRegion, amiId, awsCloneLogBucket, ENVConfig.rcloneCommand, emailTo, emailTo, ENVConfig.sqsQueueUrl, gcsPath, s3Path);
             CloneConfig cloneConfig = new CloneConfig("clone_configuration", configInfo);
             dynamoDBRepository.createConfigItem(cloneConfig);
         }
@@ -103,6 +112,10 @@ public class TaskController {
             //从文件中读取CSV数据
             CsvData data = reader.read(new InputStreamReader(file.getInputStream()));
             List<CsvRow> rows = data.getRows();
+            // Reject the whole file if any path is unsafe, before anything is stored or queued.
+            for (CsvRow row : rows) {
+                CommandSafety.requireSafePath(row.getRawList().get(0), "CSV path");
+            }
             List<String> inputPathList = new ArrayList<String>();
             rows.stream().forEach(line -> {
                 inputPathList.add(line.getRawList().get(0));
@@ -191,7 +204,6 @@ public class TaskController {
             CloneConfig config = configList.get(0);
             ENVConfig.amiID = config.getInfo().getAmiID();
             ENVConfig.awsRegion = config.getInfo().getAwsRegion();
-            ENVConfig.rcloneCommand = config.getInfo().getRcloneCommand();
             ENVConfig.transferS3LogPath = config.getInfo().getTransferS3LogBucket();
             ENVConfig.emailFrom = config.getInfo().getEmailFrom();
             ENVConfig.emailTo = config.getInfo().getEmailTo();
@@ -199,7 +211,7 @@ public class TaskController {
 
             configMap.put("ami_id", config.getInfo().getAmiID());
             configMap.put("aws_region", config.getInfo().getAwsRegion());
-            configMap.put("rclone_command", config.getInfo().getRcloneCommand());
+            configMap.put("rclone_command", ENVConfig.rcloneCommand);
             configMap.put("aws_clone_log_bucket", config.getInfo().getTransferS3LogBucket());
             configMap.put("email_from", config.getInfo().getEmailFrom());
             configMap.put("email_to", config.getInfo().getEmailTo());

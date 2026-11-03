@@ -7,7 +7,8 @@ public class ENVConfig {
     public static String awsRegion = System.getProperty("aws_region");
     public static String amiID = "ami-03190fe20ef6b1419";
     public static String transferS3LogPath = "s3:/transfer-log-rclone/";
-    public static String rcloneCommand = "rclone copy -v {SourceLocation} {DestinationLocation} ";
+    // Fixed on the server side. It is no longer accepted from clients or loaded from DynamoDB.
+    public static final String rcloneCommand = "rclone copy -v {SourceLocation} {DestinationLocation}";
     public static String emailFrom = "xxxx@163.com";
     public static String emailTo = "xxxxx@amazon.com";
     public static String sqsQueueUrl = "";

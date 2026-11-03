@@ -16,6 +16,17 @@
     <!--启动传输集群JavaScript-->
     <script type="text/javascript">
         $(function () {
+            // Send Spring Security's CSRF token (XSRF-TOKEN cookie) with every state-changing AJAX request.
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+                        var m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+                        if (m) {
+                            xhr.setRequestHeader("X-XSRF-TOKEN", decodeURIComponent(m[1]));
+                        }
+                    }
+                }
+            });
             $("#createCluster").click(function () {
                 $(this).button('loading');
                 $.ajax({
@@ -38,7 +49,7 @@
             $("#terminateCluster").click(function () {
                 $(this).button('loading');
                 $.ajax({
-                    type: "GET",
+                    type: "POST",
                     url: "terminateCluster",
                     contentType: "application/json",
                     success: function (textStatus) {
@@ -207,7 +218,7 @@
                 fd.append('awsRegion', aws_region);
                 fd.append('amiId', ami_id);
                 fd.append('awsCloneLogBucket', aws_clone_log_bucket);
-                fd.append('rcloneCommand', rclone_command);
+                // rcloneCommand is fixed on the server and is no longer sent.
                 fd.append('emailFrom', email_from);
                 fd.append('emailTo', email_to);
                 fd.append('sqsQueueUrl', sqs_queue_url);
@@ -390,9 +401,9 @@
                 </tr>
                 <tr>
                     <td style="width: 150px">Rclone 命令 :</td>
-                    <td><input style="width: 350px" id="rclone_command" class="input-group"
+                    <td><input style="width: 350px" id="rclone_command" class="input-group" readonly
                                value="rclone copy -v {SourceLocation} {DestinationLocation}"></td>
-                    <td>Rclone的传输命令，可根据需要进行修改，一般保持默认即可</td>
+                    <td>Rclone的传输命令由服务端固定，不能修改</td>
                 </tr>
                 <tr>
                     <td style="width: 150px">Alarm Email From:</td>
