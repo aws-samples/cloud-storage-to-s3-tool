@@ -36,7 +36,7 @@
         <!-- log4j2 -->
         <log4j2.version>2.15.0</log4j2.version>
         <!-- WebJars -->
-        <webjars.bootstrap.version>3.3.7</webjars.bootstrap.version>
+        <webjars.bootstrap.version>3.4.1</webjars.bootstrap.version>
         <webjars.jquery.version>3.7.1</webjars.jquery.version>
         <webjars.webjars-locator.version>0.40</webjars.webjars-locator.version>
     </properties>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.9.4</version>
+            <version>1.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -72,25 +72,21 @@
             <version>4.4</version>
         </dependency>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-        </dependency>
-        <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>net.sf.ezmorph</groupId>
-            <artifactId>ezmorph</artifactId>
-            <version>1.0.6</version>
+            <!-- Maintained fork of json-lib; keeps the net.sf.json package. Fixes CVE-2024-47855. -->
+            <groupId>org.kordamp.json</groupId>
+            <artifactId>json-lib-core</artifactId>
+            <version>3.1.0</version>
         </dependency>
         <dependency>
-            <groupId>net.sf.json-lib</groupId>
-            <artifactId>json-lib</artifactId>
-            <version>2.2.3</version>
-            <classifier>jdk15</classifier><!-- 指定jdk版本 -->
+            <!-- Replaces commons-lang 2.6 (CVE-2025-48924, no 2.x fix). -->
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
