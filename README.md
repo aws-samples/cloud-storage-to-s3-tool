@@ -48,3 +48,6 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
+
+> ⚠️ **This repository is no longer maintained.**
+> Please use [aws-samples/sample-data-transfer-tool](https://github.com/aws-samples/sample-data-transfer-tool) instead.
