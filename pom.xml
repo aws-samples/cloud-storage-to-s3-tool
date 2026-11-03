@@ -37,7 +37,7 @@
         <log4j2.version>2.15.0</log4j2.version>
         <!-- WebJars -->
         <webjars.bootstrap.version>3.3.7</webjars.bootstrap.version>
-        <webjars.jquery.version>3.2.1</webjars.jquery.version>
+        <webjars.jquery.version>3.7.1</webjars.jquery.version>
         <webjars.webjars-locator.version>0.40</webjars.webjars-locator.version>
     </properties>
 
@@ -178,7 +178,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.7.3</version>
+            <version>5.8.21</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
